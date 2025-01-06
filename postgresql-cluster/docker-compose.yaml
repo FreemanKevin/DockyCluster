@@ -1,0 +1,72 @@
+version: '3'
+
+x-common-service: &common-service
+  image: docker.io/bitnami/postgresql-repmgr:${POSTGRESQL_REPMGR_VERSION}
+  healthcheck:
+    test: ["CMD", "pg_isready", "-U", "${POSTGRESQL_USERNAME}"]
+    interval: 10s
+    timeout: 5s
+    retries: 5
+  restart: unless-stopped
+
+x-common-env: &common-env
+  TZ: 'Asia/Shanghai'
+  POSTGRESQL_POSTGRES_PASSWORD: ${POSTGRESQL_POSTGRES_PASSWORD}
+  POSTGRESQL_USERNAME: ${POSTGRESQL_USERNAME}
+  POSTGRESQL_PASSWORD: ${POSTGRESQL_PASSWORD}
+  POSTGRESQL_DATABASE: ${POSTGRESQL_DATABASE}
+  POSTGRESQL_TIMEZONE: 'Asia/Shanghai'
+  POSTGRESQL_LOG_TIMEZONE: 'Asia/Shanghai'
+  POSTGRESQL_MAX_CONNECTIONS: 1000
+  REPMGR_PASSWORD: ${REPMGR_PASSWORD}
+  REPMGR_PRIMARY_HOST: pg-0
+  REPMGR_PRIMARY_PORT: 5432
+  REPMGR_PARTNER_NODES: pg-0,pg-1:5432,pg-2:5432,pgw-0:5432
+  REPMGR_PORT_NUMBER: 5432
+
+services:
+  pg-0:
+    <<: *common-service
+    ports:
+      - ${PG0_PORT}:5432
+    volumes:
+      - /data/postgres/master:/bitnami/postgresql
+    environment:
+      <<: *common-env
+      REPMGR_NODE_NAME: pg-0
+      REPMGR_NODE_NETWORK_NAME: pg-0
+
+  pg-1:
+    <<: *common-service
+    ports:
+      - ${PG1_PORT}:5432
+    volumes:
+      - /data/postgres/standby1:/bitnami/postgresql
+    environment:
+      <<: *common-env
+      REPMGR_NODE_NAME: pg-1
+      REPMGR_NODE_NETWORK_NAME: pg-1
+
+  pg-2:
+    <<: *common-service
+    ports:
+      - ${PG2_PORT}:5432
+    volumes:
+      - /data/postgres/standby2:/bitnami/postgresql
+    environment:
+      <<: *common-env
+      REPMGR_NODE_NAME: pg-2
+      REPMGR_NODE_NETWORK_NAME: pg-2
+
+  pgw-0:
+    <<: *common-service
+    ports:
+      - ${PGW0_PORT}:5432
+    volumes:
+      - /data/postgres/witness:/bitnami/postgresql
+    environment:
+      <<: *common-env
+      REPMGR_NODE_NAME: pgw-0
+      REPMGR_NODE_NETWORK_NAME: pgw-0
+      REPMGR_NODE_TYPE: witness
+      REPMGR_NODE_ID_START_SEED: 2000
