@@ -21,9 +21,6 @@ DockyCluster/
 ## Quick Start
 
 ```bash
-git clone https://github.com/FreemanKevin/DockyCluster.git
-cd DockyCluster
-
 cd XXX-cluster/
 cp .env.example .env
 docker-compose up -d
